@@ -6,6 +6,8 @@
 #include "application.h"
 #include "button.h"
 #include "config.h"
+#include "mcp_server.h"
+#include "neck_servo.h"
 
 #include <esp_log.h>
 #include "i2c_device.h"
@@ -365,6 +367,41 @@ private:
         });
     }
 
+    // Штурман: голосовые команды для шеи
+    void InitializeNeckTools() {
+        auto& mcp_server = McpServer::GetInstance();
+        mcp_server.AddTool("self.head.look",
+            "Повернуть голову робота. angle: от -60 (влево) до 60 (вправо), 0 — смотреть прямо. "
+            "Turn the robot's head: angle -60 (left) .. 60 (right), 0 = straight ahead.",
+            PropertyList({Property("angle", kPropertyTypeInteger, -60, 60)}),
+            [this](const PropertyList& properties) -> ReturnValue {
+                neck_.LookAt(properties["angle"].value<int>());
+                return true;
+            });
+        mcp_server.AddTool("self.head.shake",
+            "Покачать головой из стороны в сторону (жест «нет»). Shake the head (a 'no' gesture).",
+            PropertyList(),
+            [this](const PropertyList& properties) -> ReturnValue {
+                neck_.Shake();
+                return true;
+            });
+        mcp_server.AddTool("self.head.look_around",
+            "Осмотреться: посмотреть влево, вправо и вернуться прямо. Look around left and right.",
+            PropertyList(),
+            [this](const PropertyList& properties) -> ReturnValue {
+                neck_.LookAround();
+                return true;
+            });
+        mcp_server.AddTool("self.head.get_angle",
+            "Узнать, куда сейчас повёрнута голова (градусы, минус — влево). Current head angle.",
+            PropertyList(),
+            [this](const PropertyList& properties) -> ReturnValue {
+                return neck_.CurrentAngle();
+            });
+    }
+
+    NeckServo neck_;
+
 public:
     CustomBoard() :
         boot_button_(BOOT_BUTTON_GPIO) {
@@ -374,6 +411,8 @@ public:
         Initializest77916Display();
         InitializeButtons();
         GetBacklight()->RestoreBrightness();
+        neck_.Start();
+        InitializeNeckTools();
     }
 
     #ifdef CONFIG_VERSION_1_0
