@@ -31,7 +31,7 @@ public:
     static constexpr int kLimitDeg = 60;      // механический предел шеи, ±градусы
     static constexpr int kPulseMinUs = 600;   // импульс при -90°
     static constexpr int kPulseMaxUs = 2400;  // импульс при +90°
-    static constexpr bool kInvert = false;    // поменять, если «влево» крутит вправо
+    static constexpr bool kInvert = true;     // поменять, если «влево» крутит вправо
     static constexpr int64_t kHoldMs = 6000;  // сколько держать позу после голосовой команды
 
     void Start() {
